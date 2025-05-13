@@ -1,5 +1,4 @@
 return {
-
 	-- LSP Plugins
 	{
 		-- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
@@ -20,8 +19,8 @@ return {
 			-- Automatically install LSPs and related tools to stdpath for Neovim
 			-- Mason must be loaded before its dependents so we need to set it up here.
 			-- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-			{ "williamboman/mason.nvim", opts = {} },
-			"williamboman/mason-lspconfig.nvim",
+			{ "mason-org/mason.nvim", opts = {} },
+			"mason-org/mason-lspconfig.nvim",
 			"WhoIsSethDaniel/mason-tool-installer.nvim",
 
 			-- Useful status updates for LSP.
@@ -181,14 +180,14 @@ return {
 				severity_sort = true,
 				float = { border = "rounded", source = "if_many" },
 				underline = { severity = vim.diagnostic.severity.ERROR },
-				signs = vim.g.have_nerd_font and {
+				signs = {
 					text = {
 						[vim.diagnostic.severity.ERROR] = "󰅚 ",
 						[vim.diagnostic.severity.WARN] = "󰀪 ",
 						[vim.diagnostic.severity.INFO] = "󰋽 ",
 						[vim.diagnostic.severity.HINT] = "󰌶 ",
 					},
-				} or {},
+				},
 				virtual_text = {
 					source = "if_many",
 					spacing = 2,
@@ -220,8 +219,27 @@ return {
 			--  - settings (table): Override the default settings passed when initializing the server.
 			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 			local servers = {
-				gopls = {},
-				ts_ls = {},
+				gopls = {
+					settings = {
+						gopls = {
+							workspaceFiles = {
+								"**/BUILD",
+								"**/WORKSPACE",
+								"**/*.{bzl,bazel}",
+							},
+							env = {
+								GOPACKAGESDRIVER = "/Users/arbeit/Documents/latido/latido/scripts/gopackagesdriver.sh",
+							},
+							directoryFilters = {
+								"-bazel-bin",
+								"-bazel-out",
+								"-bazel-testlogs",
+								"-bazel-mypkg",
+							},
+						},
+					},
+					root_dir = require("lspconfig").util.root_pattern("MODULE.bazel", "go.mod", ".git"),
+				},
 				lua_ls = {
 					-- cmd = { ... },
 					-- filetypes = { ... },
@@ -260,17 +278,25 @@ return {
 			require("mason-lspconfig").setup({
 				ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
 				automatic_installation = false,
-				handlers = {
-					function(server_name)
-						local server = servers[server_name] or {}
-						-- This handles overriding only values explicitly passed
-						-- by the server configuration above. Useful when disabling
-						-- certain features of an LSP (for example, turning off formatting for ts_ls)
-						server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-						require("lspconfig")[server_name].setup(server)
-					end,
-				},
+				-- handlers = {
+				-- 	function(server_name)
+				-- 		vim.notify("oida wos is....... nummer 123", vim.log.levels.INFO)
+				-- 		local server = servers[server_name] or {}
+				-- 		-- This handles overriding only values explicitly passed
+				-- 		-- by the server configuration above. Useful when disabling
+				-- 		-- certain features of an LSP (for example, turning off formatting for ts_ls)
+				-- 		server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+				-- 		require("lspconfig")[server_name].setup(server)
+				-- 	end,
+				-- },
 			})
+
+			lspconfig = require("lspconfig")
+
+			for server_name, server in pairs(servers) do
+				server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+				lspconfig[server_name].setup(server)
+			end
 		end,
 	},
 }
