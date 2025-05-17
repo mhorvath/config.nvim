@@ -240,6 +240,8 @@ return {
 					},
 					root_dir = require("lspconfig").util.root_pattern("MODULE.bazel", "go.mod", ".git"),
 				},
+				ts_ls = {},
+				templ = {},
 				lua_ls = {
 					-- cmd = { ... },
 					-- filetypes = { ... },
